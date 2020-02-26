@@ -1,4 +1,4 @@
-from avsimwaves import __version__
+from magstype import __version__
 
 
 def test_version():
