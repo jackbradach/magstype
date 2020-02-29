@@ -22,6 +22,7 @@ pytest = "^4.6"
 [tool.poetry.scripts]
 letter = "magstype.letter:main"
 words = "magstype.wordgame:main"
+game = "magstype.game:main"
 
 [build-system]
 requires = ["poetry>=0.12"]
