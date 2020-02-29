@@ -5,10 +5,13 @@ from kivy.uix.label import Label
 from kivy.core.window import Window
 from kivy.properties import StringProperty
 from kivy.core.window import Window
+from kivy.core.audio import SoundLoader
+from kivy.resources import resource_find
+
 
 import pyttsx3
 import random
-
+import glob
 # TODO: add text to speech?  Color text?
 
 class LetterWidget(Label):
@@ -23,6 +26,13 @@ class LetterWidget(Label):
         self._keyboard.bind(on_key_down=self._on_keyboard_down)
         self._tts = pyttsx3.init()
         self._tts.startLoop(False)
+        self._bos = BucketOSounds(
+            [
+                "Fanfares/sfx_sounds_fanfare1.wav",
+                "Fanfares/sfx_sounds_fanfare2.wav",
+                "Fanfares/sfx_sounds_fanfare3.wav"
+            ]
+        )
         self.scale_rate = -1
         Clock.schedule_interval(self._tick, 1 / 60.)
 
@@ -50,13 +60,8 @@ class LetterWidget(Label):
     
     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
         if text.upper() == self.text:
-            rate = self._tts.getProperty('rate')
-            self._tts.setProperty('rate', rate + 25)
-            for i in range(0, 3):
-                self._tts.say(self.text + "!")
             self.scale_rate = 100
-            self._tts.setProperty('rate', rate)
-            self.font_color = 'green'
+            self._bos.play()
         return True
     
     # def _on_keyboard_up(self, keyboard, keycode, text, modifiers):
@@ -70,6 +75,38 @@ class LetterWidget(Label):
 class GameApp(App):
     def build(self):
         return LetterWidget()
+
+from typing import List
+
+class BucketOSounds():
+    """Container where you put a bunch of sounds in and it
+    kicks back one at random on demand, optionally with
+    a distortion applied.  This makes it easy to add some
+    variety whithin categories of sounds.  It sounds hokey
+    if, eg, every punch or sword hit in a game is 100%
+    identical."""
+    def __init__(self, res_names: List[str]=[]):
+        self._sounds = []
+        print(f"rn: {res_names}")
+        for res_name in res_names:
+            self.add(res_name)
+
+    def add(self, res_name:str):
+        res = resource_find(res_name)
+        if res is None:
+            raise RuntimeError(f"Couldn't find resource {res_name}")
+        sound = SoundLoader.load(res)
+        if sound is None:
+            raise RuntimeError(f"Failed at loading sound '{res_name}'!")
+
+        
+        print(f"Added '{res_name}' ({sound.length} seconds) to bucket-o-sounds")
+        self._sounds.append(sound)
+
+    def play(self):
+        sound = random.choice(self._sounds)
+        sound.play()
+
 
 def main():
     GameApp().run()
